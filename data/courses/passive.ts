@@ -1,0 +1,70 @@
+import { Course } from '../../types';
+
+export const passiveCourse: Course = {
+    id: 'passive',
+    name: 'Passive Voice',
+    description: 'Focus on the action, not the actor.',
+    iconName: 'BookCopy',
+    tenses: [
+      {
+        id: 'passive-present-simple',
+        name: 'Present Simple Passive',
+        explanation: {
+          mode: 'simple',
+          usage: 'Used when the focus is on the action, not the person or thing doing the action. The subject receives the action.',
+          structure: {
+            positive: 'Object + am/is/are + V3 (Past Participle)',
+            negative: 'Object + am/is/are + not + V3',
+            interrogative: 'Am/Is/Are + object + V3?',
+            negativeInterrogative: "Isn't/Aren't + object + V3?",
+          },
+          examples: {
+            positive: ['English is spoken here.', 'The letters are delivered every day.'],
+            negative: ['Spanish is not spoken here.', 'The letters are not delivered on Sundays.'],
+            interrogative: ['Is English spoken here?', 'Are the letters delivered every day?'],
+            negativeInterrogative: ["Isn't English spoken here?", "Aren't the letters delivered today?"],
+          },
+        },
+      },
+      {
+        id: 'passive-past-simple',
+        name: 'Past Simple Passive',
+        explanation: {
+          mode: 'simple',
+          usage: 'Used for past actions where the focus is on the action itself, not who performed it.',
+          structure: {
+            positive: 'Object + was/were + V3 (Past Participle)',
+            negative: 'Object + was/were + not + V3',
+            interrogative: 'Was/Were + object + V3?',
+            negativeInterrogative: "Wasn't/Weren't + object + V3?",
+          },
+          examples: {
+            positive: ['The Mona Lisa was painted by da Vinci.', 'The windows were broken last night.'],
+            negative: ['The book was not written by him.', 'The cars were not damaged.'],
+            interrogative: ['Was the Mona Lisa painted by da Vinci?', 'Were the windows broken?'],
+            negativeInterrogative: ["Wasn't the book written by him?", "Weren't the cars damaged?"],
+          },
+        },
+      },
+      {
+        id: 'passive-future-simple',
+        name: 'Future Simple Passive',
+        explanation: {
+          mode: 'simple',
+          usage: 'Used for future actions where the focus is on the action itself.',
+          structure: {
+            positive: 'Object + will be + V3 (Past Participle)',
+            negative: 'Object + will not be + V3',
+            interrogative: 'Will + object + be + V3?',
+            negativeInterrogative: "Won't + object + be + V3?",
+          },
+          examples: {
+            positive: ['The project will be finished soon.', 'The results will be announced tomorrow.'],
+            negative: ['The project will not be finished on time.', 'The results will not be announced today.'],
+            interrogative: ['Will the project be finished soon?', 'Will the results be announced tomorrow?'],
+            negativeInterrogative: ["Won't the project be finished soon?", "Won't the results be announced tomorrow?"],
+          },
+        },
+      },
+    ],
+};
