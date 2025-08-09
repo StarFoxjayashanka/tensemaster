@@ -1,23 +1,17 @@
 
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { UserProfile, Tense, LeaderboardUser, AllCourseProgress, GrammarDetectiveChallenge, ClozeTestChallenge, TenseIdentificationChallenge } from '../types';
 
-// The original recursive Json type was causing "Type instantiation is excessively deep" errors in TypeScript,
-// breaking type inference for the entire Database type. This non-recursive version is a common workaround
-// that maintains better type safety than 'any', fixing the downstream errors.
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: any }
-  | any[];
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { UserProfile, Tense, LeaderboardUser, AllCourseProgress, GrammarDetectiveChallenge, ClozeTestChallenge, TenseIdentificationChallenge, SimpleExplanation, AdvancedExplanation } from '../types';
+
+// The original generic Json type was causing "Type instantiation is excessively deep" errors in TypeScript,
+// breaking type inference for the entire Database type. By using specific, non-recursive types below,
+// we fix the downstream errors.
 
 // Represents the structure of a single question row, used across all quiz tables.
 interface QuizTableRow {
   id: string;
   sentence: string;
-  options: Json;
+  options: string[];
   correct_answer: string;
   created_at: string;
 }
@@ -26,7 +20,7 @@ interface QuizTableRow {
 export interface QuizRpcResponseRow {
     id: string;
     sentence: string;
-    options: Json;
+    options: string[];
     correct_answer: string;
 }
 
@@ -42,8 +36,8 @@ type ProfileRow = {
   active_theme: string;
   achievements: string[];
   purchased_themes: string[];
-  purchased_power_ups: Json | null;
-  course_progress: Json | null;
+  purchased_power_ups: Record<string, number> | null;
+  course_progress: AllCourseProgress | null;
   total_quizzes_completed: number;
   total_coins_spent: number;
   last_challenge_completed: string;
@@ -71,7 +65,7 @@ type CourseTenseRow = {
   course_id: string;
   user_id: string;
   name: string;
-  explanation: Json;
+  explanation: ({ mode: 'simple' } & SimpleExplanation) | ({ mode: 'advanced' } & AdvancedExplanation);
   order: number;
   created_at: string;
 };
@@ -84,7 +78,7 @@ type CustomQuizQuestionRow = {
   tense_id: string;
   user_id: string;
   sentence: string;
-  options: Json;
+  options: string[];
   correct_answer: string;
   created_at: string;
 };
@@ -175,8 +169,8 @@ export interface Database {
 
 // --- Supabase Client Initialization ---
 // IMPORTANT: Replace with your actual Supabase Project URL and Anon Key
-const supabaseUrl: string = 'https://dxerxrdhzbetiegnjqtt.supabase.co';
-const supabaseAnonKey: string = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZXJ4cmRoemJldGllZ25qcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5MzQxODYsImV4cCI6MjA2ODUxMDE4Nn0.w-GPwCh1O2fe-uAmEATv20tvvUrxgdKSZiHZh3D4ag8';
+const supabaseUrl: string = 'https://sbufhwplhekpveksflqu.supabase.co';
+const supabaseAnonKey: string = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNidWZod3BsaGVrcHZla3NmbHF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MzE5MjksImV4cCI6MjA3MDMwNzkyOX0.eAJYAxZF3frgTKriIApJRiuFPBD25S_heJyP9xnRCcs';
 
 if (supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseAnonKey === 'YOUR_supabaseAnonKey') {
     console.warn("Supabase credentials are not set. Please update services/firebase.ts with your project's URL and Key.");
@@ -239,41 +233,71 @@ const auth = {
         return { user: data.user };
     },
 
-   signUp: async (email: string, pass: string, username: string) => {
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password: pass,
-        options: {
-            data: {
-                username: username,
-            }
-        }
-    });
+ signUp: async (email: string, pass: string, username: string) => {
+  // Step 1: Check your own table for existing email
+  const { data: existingUser, error: checkError } = await supabase
+    .from('user_confirmed_at')
+    .select('email_confirmed_at')
+    .eq('email', email)
+    .single();
 
-    if (error) {
-        // Supabase returned an error (e.g., invalid email, weak password)
-        throw error;
+  if (checkError && checkError.code !== 'PGRST116') {
+    checkError.message = `Custom error: DB issue detected - ${checkError.message}`;
+    throw checkError;
+  }
+
+  if (existingUser) {
+    if (existingUser.email_confirmed_at) {
+      throw new Error('This email address is already in use. Please try to log in.');
+    } else {
+      throw new Error('This email is already registered but not confirmed. Please check your inbox for the confirmation link.');
     }
+  }
 
-    if (data.user) {
-        const isExistingUser = data.user.identities?.length === 0;
+  // Step 2: Check for existing username in the public profiles table.
+  // This prevents sign-ups with usernames that are already taken by verified users.
+  const { data: existingProfile, error: profileCheckError } = await db
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
 
-        if (isExistingUser) {
-             if (data.user.email_confirmed_at) {
-                throw new Error('This email address is already in use. Please try to log in.');
-            } else {
-                throw new Error('This email is already registered but not confirmed. Please check your inbox for the confirmation link.');
-            }
-        } else {
-            // This is a new user, sign up was successful.
-            return { user: data.user };
-        }
+  if (profileCheckError && profileCheckError.code !== 'PGRST116') { // PGRST116 means no row found, which is what we want.
+      throw new Error(`Database error checking username: ${profileCheckError.message}`);
+  }
+
+  if (existingProfile) {
+      throw new Error('This username is already taken. Please choose another one.');
+  }
+
+  // Step 3: Sign up the user since email and username are available
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: pass,
+    options: {
+      data: {
+        username: username,
+      }
     }
+  });
 
-    // Something unexpected happened (very rare)
-    throw new Error('An unexpected issue occurred during sign-up. Please try again.');
+  if (error) {
+    // Make Supabase's somewhat cryptic errors more user-friendly.
+    if (error.message.includes("User already registered")) {
+        // This can happen in a race condition if our initial check passes but Supabase's internal check catches it.
+        throw new Error("This email is already registered. Please try to log in or reset your password.");
+    }
+    error.message = `Sign-up failed: ${error.message}`;
+    throw error;
+  }
+
+  if (data.user) {
+    // Return success only if sign-up went through
+    return { user: data.user };
+  }
+
+  throw new Error('An unexpected issue occurred during sign-up. Please try again.');
 },
-
 
     signOut: async () => {
         const { error } = await supabase.auth.signOut();
