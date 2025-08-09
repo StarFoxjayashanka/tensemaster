@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-import { db, Json } from '../services/firebase';
+import { db } from '../services/firebase';
 import Button from '../components/Button';
 import Card, { CardContent, CardHeader, CardTitle, CardDescription } from '../components/Card';
 import toast from 'react-hot-toast';

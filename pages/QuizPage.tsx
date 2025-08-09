@@ -7,7 +7,7 @@ import Card from '../components/Card';
 import CircularProgress from '../components/CircularProgress';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
-import { db, QuizRpcResponseRow, Json } from '../services/firebase';
+import { db, QuizRpcResponseRow } from '../services/firebase';
 import { Lightbulb, ShieldHalf, SkipForward, Star, HelpCircle, RotateCcw, Loader2 } from 'lucide-react';
 import { UserProfile, Achievement, QuizQuestion, Course } from '../types';
 

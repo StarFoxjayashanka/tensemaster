@@ -132,7 +132,7 @@ const TenseIdentificationPage: React.FC = () => {
                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2 text-left">
+                        <div className="space-y-2 text-left">
                            {challenges.map((q, index) => {
                                 const userAnswer = answers[index];
                                 const isCorrect = q.correct_tense_name === userAnswer;

@@ -1,11 +1,11 @@
 
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../services/firebase';
 import { LeaderboardUser } from '../types';
 import Button from '../components/Button';
-import { ArrowLeft, Loader2, Award, Star, Crown } from 'lucide-react';
+import { ArrowLeft, Loader2, Star, Crown } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -54,7 +54,6 @@ interface PlayerCardProps {
   isCurrentUser: boolean;
 }
 
-// Memoized player card without animation delay, as it's not needed for virtualization.
 const PlayerCard: React.FC<PlayerCardProps> = ({ player, isCurrentUser }) => {
   const animatedXP = useAnimatedCounter(player.xp);
   const level = Math.floor(player.xp / 500) + 1;
@@ -69,7 +68,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, isCurrentUser }) => {
   return (
     <div
       className={`leaderboard-list-item flex items-center p-4 rounded-xl border bg-card/60 backdrop-blur-sm shadow-lg shadow-black/20 ${rankClass} ${isCurrentUser ? 'current-user' : 'border-border'}`}
-      style={{ animation: 'list-item-appear 0.5s ease-out forwards' }} // Keep entry animation
+      style={{ animation: 'list-item-appear 0.5s ease-out forwards' }}
       data-interactive
     >
       <div className="rank-badge">
@@ -104,7 +103,7 @@ const MemoizedPlayerCard = React.memo(PlayerCard);
 const LeaderboardPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = ReactRouterDOM.useNavigate();
-    const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+    const [allPlayers, setAllPlayers] = useState<LeaderboardUser[]>([]);
     const [currentUserData, setCurrentUserData] = useState<LeaderboardUser | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -120,10 +119,11 @@ const LeaderboardPage: React.FC = () => {
                 });
                 if (error) throw error;
                 
-                const allPlayers = data || [];
-                const foundUser = allPlayers.find(p => p.id === user.id) || null;
-                setCurrentUserData(foundUser);
-                setLeaderboard(allPlayers);
+                const players = data || [];
+                const userOnBoard = players.find(p => p.id === user.id) || null;
+                setCurrentUserData(userOnBoard);
+                setAllPlayers(players);
+
             } catch (error: any) {
                 console.error("Failed to fetch leaderboard data:", error);
             } finally {
@@ -135,24 +135,23 @@ const LeaderboardPage: React.FC = () => {
     }, [user]);
 
     // Define the Row component for react-window
-    // It needs to be memoized to prevent re-renders on scroll, which is a key performance optimization.
-    const Row = React.useCallback(({ index, style }: { index: number, style: React.CSSProperties }) => {
-        const player = leaderboard[index];
+    const Row = useCallback(({ index, style }: { index: number, style: React.CSSProperties }) => {
+        const player = allPlayers[index];
         if (!player) return null;
         return (
-            <div style={{ ...style, paddingBottom: '12px', paddingLeft: '2px', paddingRight: '2px' }}>
+            <div style={{...style, padding: '0 8px 12px 8px' }}>
                 <MemoizedPlayerCard
                     player={player}
                     isCurrentUser={player.id === user?.id}
                 />
             </div>
         );
-    }, [leaderboard, user?.id]);
+    }, [allPlayers, user?.id]);
     
     return (
         <div className="hall-of-fame-container" style={{ height: 'calc(100vh - 80px)' }}> {/* 80px is header height */}
-            <div className="container mx-auto p-4 md:p-8 flex flex-col h-full">
-                <header className="mb-8 md:mb-12 flex-shrink-0">
+            <div className="p-4 md:p-8 flex flex-col h-full overflow-hidden">
+                <header className="mb-4 md:mb-6 flex-shrink-0">
                     <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to Dashboard
@@ -165,7 +164,7 @@ const LeaderboardPage: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="max-w-3xl mx-auto w-full flex-grow relative">
+                <div className="w-full max-w-7xl mx-auto flex-grow relative pb-4">
                     <AutoSizer>
                         {({ height, width }) => {
                             if (loading) {
@@ -176,12 +175,12 @@ const LeaderboardPage: React.FC = () => {
                                 );
                             }
 
-                            if (leaderboard.length > 0) {
+                            if (allPlayers.length > 0) {
                                 return (
                                     <List
                                         height={height}
-                                        itemCount={leaderboard.length}
-                                        itemSize={88} // 76px for card + 12px for gap
+                                        itemCount={allPlayers.length}
+                                        itemSize={100} // Approximate height of a card + padding
                                         width={width}
                                     >
                                         {Row}
@@ -191,7 +190,7 @@ const LeaderboardPage: React.FC = () => {
                             
                             return (
                                 <div style={{ height, width }} className="flex items-center justify-center text-muted-foreground">
-                                    <p>The leaderboard is empty.</p>
+                                    <p>The leaderboard is waiting for more challengers!</p>
                                 </div>
                             );
                         }}
@@ -200,8 +199,8 @@ const LeaderboardPage: React.FC = () => {
 
                 {/* Sticky User Card */}
                 {!loading && currentUserData && (
-                   <div className="sticky-user-card flex-shrink-0 mt-4 p-2 rounded-t-xl">
-                       <div className="max-w-3xl mx-auto">
+                   <div className="sticky-user-card flex-shrink-0 p-2 rounded-t-xl">
+                       <div className="max-w-7xl mx-auto">
                            <MemoizedPlayerCard player={currentUserData} isCurrentUser={true} />
                        </div>
                    </div>

@@ -1,5 +1,6 @@
 
 
+
 import React, { useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -83,12 +84,12 @@ const Main: React.FC = () => {
         document.body.classList.add(savedFontSize);
 
         const theme = userData?.active_theme || 'deep-space';
-        document.body.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
 
         // --- Theme type for cursor ---
         const lightThemes = new Set(['theme-mint', 'theme-sakura', 'theme-desert', 'theme-lavender', 'theme-diamond']);
         const themeType = lightThemes.has(theme) ? 'light' : 'dark';
-        document.body.setAttribute('data-theme-type', themeType);
+        document.documentElement.setAttribute('data-theme-type', themeType);
         
         const cursor = document.querySelector('.custom-cursor') as HTMLElement;
         if (!cursor) return;
@@ -119,7 +120,7 @@ const Main: React.FC = () => {
             document.documentElement.style.setProperty('--mouse-y-bg', `${mousePos.y}px`);
 
             // 3. Diamond theme sparkle effect (throttled inside)
-            const currentTheme = document.body.getAttribute('data-theme');
+            const currentTheme = document.documentElement.getAttribute('data-theme');
             const now = Date.now();
             if (currentTheme === 'theme-diamond' && now - lastSparkleMove > sparkleThrottleInterval) {
                 lastSparkleMove = now;
