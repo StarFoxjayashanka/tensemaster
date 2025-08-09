@@ -139,7 +139,8 @@ const LeaderboardPage: React.FC = () => {
         const player = allPlayers[index];
         if (!player) return null;
         return (
-            <div style={{...style, padding: '0 8px 12px 8px' }}>
+            <div style={{ ...style, padding: '0 8px 12px 8px', marginBottom: '15px' }}>
+
                 <MemoizedPlayerCard
                     player={player}
                     isCurrentUser={player.id === user?.id}
