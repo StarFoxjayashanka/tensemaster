@@ -180,7 +180,7 @@ const LeaderboardPage: React.FC = () => {
                                     <List
                                         height={height}
                                         itemCount={allPlayers.length}
-                                        itemSize={100} // Approximate height of a card + padding
+                                        itemSize={115} // Approximate height of a card + padding
                                         width={width}
                                     >
                                         {Row}
