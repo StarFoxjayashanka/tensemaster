@@ -129,7 +129,7 @@ const DashboardPage: React.FC = () => {
     <div className="container mx-auto p-4 md:p-8 space-y-12 md:space-y-16">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2 break-words">
           Welcome back, <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{userData.username}!</span>
         </h1>
         <p className="text-muted-foreground text-lg">Here's a summary of your journey so far.</p>
@@ -196,7 +196,7 @@ const DashboardPage: React.FC = () => {
                         {leaderboard.map((player, index) => (
                             <div key={player.id} className={`flex items-center p-3 rounded-lg ${player.id === userData.id ? 'bg-primary/10' : 'bg-secondary/50'}`}>
                                 <div className="w-10 font-bold text-lg text-center">{player.rank}</div>
-                                <div className="flex-1 font-semibold text-lg">{player.username} {player.id === userData.id && <span className="text-xs text-primary font-normal">(You)</span>}</div>
+                                <div className="flex-1 font-semibold text-lg truncate min-w-0">{player.username} {player.id === userData.id && <span className="text-xs text-primary font-normal">(You)</span>}</div>
                                 <div className="flex items-center gap-2 font-bold text-primary">
                                     <Star className="w-5 h-5"/>
                                     {player.xp.toLocaleString()}
@@ -299,7 +299,7 @@ const DashboardPage: React.FC = () => {
                     <CardTitle>Themes</CardTitle>
                     <CardDescription>Customize your learning experience. You have <span className="font-bold text-coin">{userData.ai_coins.toLocaleString()} AI Coins</span>.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {themes.map(item => {
                         const isOwned = userData.purchased_themes.includes(item.id);
                         const isActive = userData.active_theme === item.id;
