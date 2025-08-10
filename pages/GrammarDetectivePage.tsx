@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { db } from '../services/firebase';
@@ -18,6 +19,9 @@ const GrammarDetectivePage: React.FC = () => {
     const [results, setResults] = useState<{ correct: Set<string>; incorrect: Set<string>; missed: Set<string> } | null>(null);
     const [paragraphKey, setParagraphKey] = useState(Date.now());
 
+    const theme = userData?.active_theme || 'deep-space';
+    const lightThemes = new Set(['theme-mint', 'theme-sakura', 'theme-desert', 'theme-lavender', 'theme-diamond']);
+    const isLightTheme = lightThemes.has(theme);
 
     const fetchChallenge = async () => {
         setLoading(true);
@@ -111,13 +115,23 @@ const GrammarDetectivePage: React.FC = () => {
             className = "rounded p-1 -m-1"; // Not clickable after submit
             const errorInfo = challenge.errors.find(e => e.incorrect === cleanedWord);
 
+            const correctClass = isLightTheme 
+                ? ' bg-green-100 text-green-700 underline decoration-dotted'
+                : ' bg-green-500/20 text-green-400 underline decoration-dotted';
+            const incorrectClass = isLightTheme 
+                ? ' bg-red-100 text-red-700 line-through'
+                : ' bg-red-500/20 text-red-400 line-through';
+            const missedClass = isLightTheme 
+                ? ' bg-yellow-100 text-yellow-700 underline decoration-wavy'
+                : ' bg-yellow-500/20 text-yellow-400 underline decoration-wavy';
+
             if (results.correct.has(cleanedWord) && errorInfo) {
-                className += ' bg-green-500/30 text-green-300 underline decoration-dotted';
+                className += ` ${correctClass}`;
                 title = `Correction: ${errorInfo.correct}`;
             } else if (results.incorrect.has(cleanedWord)) {
-                className += ' bg-red-500/30 text-red-300 line-through';
+                className += ` ${incorrectClass}`;
             } else if (results.missed.has(cleanedWord) && errorInfo) {
-                className += ' bg-yellow-500/30 text-yellow-300 underline decoration-wavy';
+                className += ` ${missedClass}`;
                 title = `Missed! Correction: ${errorInfo.correct}`;
             }
         } else {
@@ -134,6 +148,10 @@ const GrammarDetectivePage: React.FC = () => {
     if (loading) {
         return <div className="flex items-center justify-center h-[calc(100vh-80px)]"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
     }
+
+    const greenTextClass = isLightTheme ? 'text-green-700' : 'text-green-400';
+    const redTextClass = isLightTheme ? 'text-red-700' : 'text-red-400';
+    const yellowTextClass = isLightTheme ? 'text-yellow-700' : 'text-yellow-400';
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -161,15 +179,15 @@ const GrammarDetectivePage: React.FC = () => {
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="p-4 rounded-lg bg-green-500/10">
-                                <h3 className="font-bold text-lg text-green-400 flex items-center gap-2"><CheckCircle/>Correctly Found</h3>
+                                <h3 className={`font-bold text-lg ${greenTextClass} flex items-center gap-2`}><CheckCircle/>Correctly Found</h3>
                                 <p className="text-2xl font-bold">{results.correct.size}</p>
                             </div>
                              <div className="p-4 rounded-lg bg-red-500/10">
-                                <h3 className="font-bold text-lg text-red-400 flex items-center gap-2"><XCircle/>Incorrectly Selected</h3>
+                                <h3 className={`font-bold text-lg ${redTextClass} flex items-center gap-2`}><XCircle/>Incorrectly Selected</h3>
                                 <p className="text-2xl font-bold">{results.incorrect.size}</p>
                             </div>
                              <div className="p-4 rounded-lg bg-yellow-500/10">
-                                <h3 className="font-bold text-lg text-yellow-400 flex items-center gap-2"><Search/>Errors Missed</h3>
+                                <h3 className={`font-bold text-lg ${yellowTextClass} flex items-center gap-2`}><Search/>Errors Missed</h3>
                                 <p className="text-2xl font-bold">{results.missed.size}</p>
                             </div>
                         </div>
@@ -179,7 +197,7 @@ const GrammarDetectivePage: React.FC = () => {
                                 <ul className="list-disc list-inside space-y-1">
                                     {challenge.errors.map(error => (
                                         <li key={error.incorrect}>
-                                            <span className="text-red-400 line-through">{error.incorrect}</span> → <span className="text-green-400">{error.correct}</span>
+                                            <span className={`${redTextClass} line-through`}>{error.incorrect}</span> → <span className={greenTextClass}>{error.correct}</span>
                                         </li>
                                     ))}
                                 </ul>
