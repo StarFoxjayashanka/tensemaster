@@ -36,11 +36,11 @@ const GauntletPage: React.FC = () => {
                     return (
                         <Card 
                             key={mode.id} 
-                            className="hover:border-accent transition-colors flex flex-col"
+                            className="hover:border-primary transition-colors flex flex-col"
                         >
                             <CardHeader>
                                 <div className="flex items-center gap-4">
-                                    <Icon className="w-10 h-10 text-accent" />
+                                    <Icon className="w-10 h-10 text-primary" />
                                     <div>
                                         <CardTitle className="text-2xl">{mode.name}</CardTitle>
                                     </div>

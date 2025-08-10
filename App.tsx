@@ -51,6 +51,39 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+// Placed outside the component as it doesn't depend on component state.
+const updateFavicon = () => {
+    // requestAnimationFrame ensures this runs before the next browser repaint,
+    // after CSS variables from the new theme have been computed.
+    requestAnimationFrame(() => {
+        const primaryColorHsl = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+        if (!primaryColorHsl) {
+            // This might happen on initial load before styles are fully parsed.
+            // It will be called again on theme change.
+            return;
+        }
+
+        const fullColor = `hsl(${primaryColorHsl})`;
+        const svgPath = 'M12 0L6.5 3.33v6.67L12 13.33l5.5-3.33V3.33zM17.5 14l-5.5 3.33L6.5 14v6.67L12 24l5.5-3.33z';
+
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${fullColor}" d="${svgPath}"/></svg>`;
+        const faviconUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+
+        let link = document.getElementById('dynamic-favicon') as HTMLLinkElement | null;
+        if (link) {
+            link.href = faviconUrl;
+        } else {
+            // Fallback: create the link if it's missing
+            link = document.createElement('link');
+            link.id = 'dynamic-favicon';
+            link.rel = 'icon';
+            link.type = 'image/svg+xml';
+            link.href = faviconUrl;
+            document.head.appendChild(link);
+        }
+    });
+};
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -85,6 +118,9 @@ const Main: React.FC = () => {
 
         const theme = userData?.active_theme || 'deep-space';
         document.documentElement.setAttribute('data-theme', theme);
+
+        // Update favicon to match the new theme color
+        updateFavicon();
 
         // --- Theme type for cursor ---
         const lightThemes = new Set(['theme-mint', 'theme-sakura', 'theme-desert', 'theme-lavender', 'theme-diamond']);
